@@ -15,6 +15,7 @@ export interface AppUser {
   uid: string;
   email: string | null;
   role: UserRole;
+  displayName?: string | null;
   displayName?: string;
 }
 
