@@ -16,7 +16,6 @@ export interface AppUser {
   email: string | null;
   role: UserRole;
   displayName?: string | null;
-  displayName?: string;
 }
 
 interface AuthContextType {
