@@ -57,7 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             createdAt: Date.now(),
           };
           await set(ref(db, `users/${fbUser.uid}`), userData);
-          setUser({ uid: fbUser.uid, email: fbUser.email, ...userData });
+          setUser({ uid: fbUser.uid, email: fbUser.email ?? undefined, role: userData.role, displayName: userData.displayName ?? undefined });
         }
       } else {
         setFirebaseUser(null);
