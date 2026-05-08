@@ -49,7 +49,7 @@ function ItemsPage() {
     if (filterCategory !== "all" && item.categoryId !== filterCategory) return false;
     if (filterSupplier !== "all" && item.supplierId !== filterSupplier) return false;
     if (filterStock === "low") {
-      const threshold = Math.ceil(item.quantityAdded * 0.45);
+      const threshold = Math.ceil(item.quantityAdded * 0.25);
       if (item.remaining > threshold) return false;
     }
     return true;
@@ -205,7 +205,7 @@ function ItemsPage() {
               <tr><td colSpan={isAdmin ? 10 : 9} className="text-center py-8 text-muted-foreground">No items found</td></tr>
             ) : (
               filtered.map((item) => {
-                const threshold = Math.ceil(item.quantityAdded * 0.45);
+                const threshold = Math.ceil(item.quantityAdded * 0.25);
                 const isLow = item.remaining <= threshold;
                 return (
                   <tr key={item.id}>

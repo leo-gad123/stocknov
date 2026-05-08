@@ -22,7 +22,7 @@ function DashboardPage() {
   const { data: movements } = useStockMovements();
 
   const lowStockItems = items.filter((item) => {
-    const threshold = Math.ceil(item.quantityAdded * 0.45);
+    const threshold = Math.ceil(item.quantityAdded * 0.25);
     return item.remaining <= threshold;
   });
 
@@ -130,7 +130,7 @@ function DashboardPage() {
                 </thead>
                 <tbody>
                   {items.map((item) => {
-                    const threshold = Math.ceil(item.quantityAdded * 0.45);
+                    const threshold = Math.ceil(item.quantityAdded * 0.25);
                     const isLow = item.remaining <= threshold;
                     return (
                       <tr key={item.id} className={isLow ? "bg-low-stock/5" : ""}>
@@ -161,7 +161,7 @@ function DashboardPage() {
           </h2>
           <div className="flex flex-wrap gap-2">
             {lowStockItems.map((item) => {
-              const threshold = Math.ceil(item.quantityAdded * 0.45);
+              const threshold = Math.ceil(item.quantityAdded * 0.25);
               return (
                 <span key={item.id} className="inline-flex items-center rounded-full border border-low-stock/30 bg-card px-3 py-1.5 text-sm">
                   <span className="font-medium text-foreground">{item.name}</span>
