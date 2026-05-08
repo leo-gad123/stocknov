@@ -57,7 +57,7 @@ function DashboardPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="stat-card">
           <div className="flex items-center justify-between">
             <div>
@@ -70,16 +70,7 @@ function DashboardPage() {
         <div className="stat-card">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Total Quantity by Unit</p>
-              <p className="mt-1 text-xl font-semibold text-foreground">{totalByUnit || "0"}</p>
-            </div>
-            <BarChart3 className="h-8 w-8 text-primary opacity-80" />
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Low Stock Items (≤45%)</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Low Stock Items (≤25%)</p>
               <p className="mt-1 text-3xl font-semibold text-foreground">{lowStockItems.length}</p>
             </div>
             <AlertTriangle className="h-8 w-8 text-low-stock opacity-80" />
