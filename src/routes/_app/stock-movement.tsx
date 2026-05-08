@@ -1,14 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
-import { useItems, useStockMovements, addStockMovement } from "@/lib/firebase-hooks";
+import { useItems, useCategories, useSuppliers, useStockMovements, addStockMovement } from "@/lib/firebase-hooks";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Loader2, ArrowDownUp, Search } from "lucide-react";
-import { format } from "date-fns";
+import { Plus, Loader2, Search, Download, FileText } from "lucide-react";
+import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
+import jsPDF from "jspdf";
+import autoTable from "jspdf-autotable";
 
 export const Route = createFileRoute("/_app/stock-movement")({
   component: StockMovementPage,
@@ -17,6 +19,8 @@ export const Route = createFileRoute("/_app/stock-movement")({
 function StockMovementPage() {
   const { user } = useAuth();
   const { data: items } = useItems();
+  const { data: categories } = useCategories();
+  const { data: suppliers } = useSuppliers();
   const { data: movements, loading } = useStockMovements();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [search, setSearch] = useState("");
@@ -54,13 +58,159 @@ function StockMovementPage() {
     }
   };
 
+  const getItemName = (id: string) => items.find((i) => i.id === id)?.name || "Unknown";
+  const getSupplierName = (id: string) => suppliers.find((s) => s.id === id)?.name || "Unknown";
+  const getCategoryName = (id: string) => categories.find((c) => c.id === id)?.name || "Unknown";
+
+  const generateReport = (type: "daily" | "weekly" | "monthly") => {
+    const doc = new jsPDF();
+    const now = new Date();
+    let rangeStart: Date;
+    let rangeEnd: Date;
+    let dateRange: string;
+
+    if (type === "daily") {
+      rangeStart = startOfDay(now);
+      rangeEnd = endOfDay(now);
+      dateRange = format(now, "MMMM d, yyyy");
+    } else if (type === "weekly") {
+      rangeStart = startOfWeek(now, { weekStartsOn: 1 });
+      rangeEnd = endOfWeek(now, { weekStartsOn: 1 });
+      dateRange = `${format(rangeStart, "MMM d")} - ${format(rangeEnd, "MMM d, yyyy")}`;
+    } else {
+      rangeStart = startOfMonth(now);
+      rangeEnd = endOfMonth(now);
+      dateRange = format(now, "MMMM yyyy");
+    }
+
+    const periodMovements = movements.filter(
+      (m) => m.createdAt >= rangeStart.getTime() && m.createdAt <= rangeEnd.getTime()
+    );
+
+    // Header
+    doc.setFillColor(40, 55, 85);
+    doc.rect(0, 0, 210, 35, "F");
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(20);
+    doc.setFont("helvetica", "bold");
+    doc.text("StockManager", 14, 16);
+    doc.setFontSize(10);
+    doc.setFont("helvetica", "normal");
+    doc.text(`${type.charAt(0).toUpperCase() + type.slice(1)} Stock Movement Report`, 14, 24);
+    doc.text(`Period: ${dateRange}`, 14, 30);
+    doc.text(`Generated: ${format(now, "MMM d, yyyy HH:mm")}`, 210 - 14, 30, { align: "right" });
+
+    let yPos = 45;
+
+    // Summary stats
+    doc.setTextColor(40, 55, 85);
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text("Summary", 14, yPos);
+    yPos += 8;
+
+    const totalQty = periodMovements.reduce((s, m) => s + m.quantity, 0);
+    autoTable(doc, {
+      startY: yPos,
+      body: [
+        ["Total Movements", String(periodMovements.length)],
+        ["Total Quantity Used", String(totalQty)],
+        ["Report Period", dateRange],
+      ],
+      theme: "plain",
+      bodyStyles: { fontSize: 9 },
+      columnStyles: { 0: { fontStyle: "bold", cellWidth: 80 }, 1: { halign: "right" as const } },
+    });
+
+    // Movements table
+    const movY = (doc as any).lastAutoTable?.finalY + 10 || yPos + 30;
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(40, 55, 85);
+    doc.text("Movement Details", 14, movY);
+
+    const tableData = periodMovements
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .map((m) => {
+        const item = items.find((i) => i.id === m.itemId);
+        return [
+          item?.name || "Unknown",
+          String(m.quantity) + " " + (item?.unitType || ""),
+          m.takenBy,
+          m.notes || "—",
+          format(new Date(m.createdAt), "MMM d, yyyy HH:mm"),
+        ];
+      });
+
+    autoTable(doc, {
+      startY: movY + 6,
+      head: [["Item", "Quantity", "Taken By", "Notes", "Date"]],
+      body: tableData.length > 0 ? tableData : [["No movements in this period", "", "", "", ""]],
+      theme: "striped",
+      headStyles: { fillColor: [40, 55, 85], fontSize: 8 },
+      bodyStyles: { fontSize: 8 },
+    });
+
+    // Items summary
+    if (periodMovements.length > 0) {
+      const itemSummary = new Map<string, number>();
+      periodMovements.forEach((m) => {
+        itemSummary.set(m.itemId, (itemSummary.get(m.itemId) || 0) + m.quantity);
+      });
+
+      const summaryY = (doc as any).lastAutoTable?.finalY + 10;
+      if (summaryY < 250) {
+        doc.setFontSize(12);
+        doc.setFont("helvetica", "bold");
+        doc.setTextColor(40, 55, 85);
+        doc.text("Usage by Item", 14, summaryY);
+
+        const summaryData = Array.from(itemSummary.entries()).map(([itemId, qty]) => {
+          const item = items.find((i) => i.id === itemId);
+          return [item?.name || "Unknown", String(qty) + " " + (item?.unitType || ""), String(item?.remaining || 0)];
+        });
+
+        autoTable(doc, {
+          startY: summaryY + 6,
+          head: [["Item", "Total Used", "Current Remaining"]],
+          body: summaryData,
+          theme: "striped",
+          headStyles: { fillColor: [40, 55, 85], fontSize: 8 },
+          bodyStyles: { fontSize: 8 },
+        });
+      }
+    }
+
+    // Footer
+    const pageCount = doc.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(150, 150, 150);
+      doc.text(`Page ${i} of ${pageCount}`, 210 / 2, 290, { align: "center" });
+    }
+
+    doc.save(`stock-movement-${type}-${format(now, "yyyy-MM-dd")}.pdf`);
+  };
+
   return (
     <div>
       <div className="page-header">
         <h1 className="page-title">Stock Movement</h1>
-        <Button onClick={() => { setError(""); setDialogOpen(true); }}>
-          <Plus className="h-4 w-4" /> Record Stock Out
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" size="sm" onClick={() => generateReport("daily")}>
+            <Download className="h-4 w-4" /> Daily
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => generateReport("weekly")}>
+            <Download className="h-4 w-4" /> Weekly
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => generateReport("monthly")}>
+            <Download className="h-4 w-4" /> Monthly
+          </Button>
+          <Button onClick={() => { setError(""); setDialogOpen(true); }}>
+            <Plus className="h-4 w-4" /> Record Stock Out
+          </Button>
+        </div>
       </div>
 
       <div className="mb-6">
