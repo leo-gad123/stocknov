@@ -20,7 +20,6 @@ import { useState } from "react";
 const navItems = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { to: "/items", label: "Items", icon: Package },
-  { to: "/categories", label: "Categories", icon: FolderOpen, adminOnly: true },
   { to: "/suppliers", label: "Suppliers", icon: Truck, adminOnly: true },
   { to: "/stock-movement", label: "Stock Movement", icon: ArrowDownUp },
   { to: "/reports", label: "Reports", icon: FileText },
