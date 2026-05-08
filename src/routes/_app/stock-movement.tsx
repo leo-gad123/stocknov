@@ -44,7 +44,7 @@ function StockMovementPage() {
       await addStockMovement({
         itemId: form.itemId,
         quantity: form.quantity,
-        notes: form.notes || undefined,
+        notes: form.notes || null,
         takenBy: form.takenBy.trim(),
         createdAt: Date.now(),
         createdBy: user.uid,
