@@ -290,52 +290,56 @@ function StockMovementPage() {
               <Input type="number" min={1} value={form.quantity || ""} onChange={(e) => setForm((f) => ({ ...f, quantity: Number(e.target.value) }))} />
             </div>
             <div className="space-y-2">
-              <div className="flex items-center justify-between">
-                <Label>Taken By *</Label>
-                <button
-                  type="button"
-                  className="flex items-center gap-1 text-xs text-primary hover:underline"
-                  onClick={() => {
-                    const name = prompt("Enter new person name:");
-                    if (name?.trim()) {
-                      setForm((f) => ({ ...f, takenBy: name.trim() }));
-                    }
-                  }}
-                >
-                  <Plus className="h-3 w-3" /> Add new
-                </button>
-              </div>
+              <Label>Taken By *</Label>
               <div className="relative">
-                <Input
-                  value={form.takenBy}
-                  onChange={(e) => {
-                    setForm((f) => ({ ...f, takenBy: e.target.value }));
-                    setTakenByOpen(true);
-                    setTakenBySearch(e.target.value);
-                  }}
-                  onFocus={() => { setTakenByOpen(true); setTakenBySearch(form.takenBy); }}
-                  onBlur={() => setTimeout(() => setTakenByOpen(false), 150)}
-                  placeholder="Type or select a name"
-                  autoComplete="off"
-                />
-                {takenByOpen && filteredTakers.length > 0 && (
-                  <div className="absolute z-50 mt-1 max-h-40 w-full overflow-y-auto rounded-md border bg-popover shadow-md">
-                    {filteredTakers.map((name) => (
-                      <button
-                        key={name}
-                        type="button"
-                        className="w-full px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground"
-                        onMouseDown={(e) => {
-                          e.preventDefault();
-                          setForm((f) => ({ ...f, takenBy: name }));
-                          setTakenByOpen(false);
-                        }}
-                      >
-                        {name}
-                      </button>
-                    ))}
+                <div className="flex gap-2">
+                  <div className="relative flex-1">
+                    <Input
+                      value={form.takenBy}
+                      onChange={(e) => {
+                        setForm((f) => ({ ...f, takenBy: e.target.value }));
+                        setTakenByOpen(true);
+                        setTakenBySearch(e.target.value);
+                      }}
+                      onFocus={() => { setTakenByOpen(true); setTakenBySearch(form.takenBy); }}
+                      onBlur={() => setTimeout(() => setTakenByOpen(false), 150)}
+                      placeholder="Type or select a name"
+                      autoComplete="off"
+                    />
+                    {takenByOpen && (
+                      <div className="absolute z-50 mt-1 max-h-48 w-full overflow-y-auto rounded-md border bg-popover shadow-md">
+                        {filteredTakers.map((name) => (
+                          <button
+                            key={name}
+                            type="button"
+                            className="w-full px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground"
+                            onMouseDown={(e) => {
+                              e.preventDefault();
+                              setForm((f) => ({ ...f, takenBy: name }));
+                              setTakenByOpen(false);
+                            }}
+                          >
+                            {name}
+                          </button>
+                        ))}
+                        <button
+                          type="button"
+                          className="flex w-full items-center gap-2 border-t px-3 py-2 text-left text-sm font-medium text-primary hover:bg-accent"
+                          onMouseDown={(e) => {
+                            e.preventDefault();
+                            setTakenByOpen(false);
+                            const newName = prompt("Enter new person name:");
+                            if (newName?.trim()) {
+                              setForm((f) => ({ ...f, takenBy: newName.trim() }));
+                            }
+                          }}
+                        >
+                          <Plus className="h-3.5 w-3.5" /> Add new person
+                        </button>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
             </div>
             <div className="space-y-2">
