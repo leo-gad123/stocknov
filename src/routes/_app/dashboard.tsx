@@ -141,6 +141,42 @@ function DashboardPage() {
             </div>
           )}
         </div>
+        {/* Recent Stock Movements */}
+        <div className="rounded-lg border bg-card p-5">
+          <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground">
+            <ArrowDownUp className="h-5 w-5 text-primary" />
+            Recent Stock Movements
+          </h2>
+          {recentMovements.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No movements yet.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Qty</th>
+                    <th>Taken By</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentMovements.map((mov) => {
+                    const item = items.find((i) => i.id === mov.itemId);
+                    return (
+                      <tr key={mov.id}>
+                        <td className="font-medium">{item?.name || "Unknown"}</td>
+                        <td>{mov.quantity} {item?.unitType}</td>
+                        <td>{mov.takenBy}</td>
+                        <td className="text-muted-foreground">{format(new Date(mov.createdAt), "MMM d, HH:mm")}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Low Stock Alerts */}
