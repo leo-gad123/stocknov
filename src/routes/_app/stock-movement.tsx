@@ -291,7 +291,38 @@ function StockMovementPage() {
             </div>
             <div className="space-y-2">
               <Label>Taken By *</Label>
-              <Input value={form.takenBy} onChange={(e) => setForm((f) => ({ ...f, takenBy: e.target.value }))} placeholder="Name of person" />
+              <div className="relative">
+                <Input
+                  value={form.takenBy}
+                  onChange={(e) => {
+                    setForm((f) => ({ ...f, takenBy: e.target.value }));
+                    setTakenByOpen(true);
+                    setTakenBySearch(e.target.value);
+                  }}
+                  onFocus={() => { setTakenByOpen(true); setTakenBySearch(form.takenBy); }}
+                  onBlur={() => setTimeout(() => setTakenByOpen(false), 150)}
+                  placeholder="Type or select a name"
+                  autoComplete="off"
+                />
+                {takenByOpen && filteredTakers.length > 0 && (
+                  <div className="absolute z-50 mt-1 max-h-40 w-full overflow-y-auto rounded-md border bg-popover shadow-md">
+                    {filteredTakers.map((name) => (
+                      <button
+                        key={name}
+                        type="button"
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          setForm((f) => ({ ...f, takenBy: name }));
+                          setTakenByOpen(false);
+                        }}
+                      >
+                        {name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="space-y-2">
               <Label>Notes</Label>
