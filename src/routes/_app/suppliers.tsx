@@ -50,30 +50,26 @@ function SuppliersPage() {
         <Button onClick={openNew}><Plus className="h-4 w-4" /> Add Supplier</Button>
       </div>
 
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+      <div className="space-y-3">
         {loading ? (
-          <div className="col-span-full flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
+          <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-muted-foreground" /></div>
         ) : suppliers.length === 0 ? (
-          <div className="col-span-full text-center py-12 text-muted-foreground">No suppliers yet.</div>
+          <div className="text-center py-12 text-muted-foreground">No suppliers yet.</div>
         ) : (
           suppliers.map((s) => (
-            <div key={s.id} className="stat-card">
-              <div className="flex items-start justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-chart-2/15">
-                    <Truck className="h-5 w-5 text-chart-2" />
-                  </div>
-                  <p className="font-semibold text-foreground">{s.name}</p>
-                </div>
-                <div className="flex gap-1">
-                  <Button variant="ghost" size="icon" onClick={() => openEdit(s)}><Edit className="h-4 w-4" /></Button>
-                  <Button variant="ghost" size="icon" onClick={() => handleDelete(s.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
-                </div>
+            <div key={s.id} className="flex items-center gap-4 rounded-lg border bg-card p-4">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-chart-2/15">
+                <Truck className="h-5 w-5 text-chart-2" />
               </div>
-              <div className="space-y-1.5 text-sm text-muted-foreground">
-                <p className="flex items-center gap-2"><Phone className="h-3.5 w-3.5" />{s.phone}</p>
-                {s.email && <p className="flex items-center gap-2"><Mail className="h-3.5 w-3.5" />{s.email}</p>}
-                <p className="flex items-center gap-2"><MapPin className="h-3.5 w-3.5" />{s.address}</p>
+              <p className="min-w-[140px] font-semibold text-foreground">{s.name}</p>
+              <div className="flex flex-1 flex-wrap items-center gap-x-6 gap-y-1 text-sm text-muted-foreground">
+                <span className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5" />{s.phone}</span>
+                {s.email && <span className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" />{s.email}</span>}
+                <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" />{s.address}</span>
+              </div>
+              <div className="flex shrink-0 gap-1">
+                <Button variant="ghost" size="icon" onClick={() => openEdit(s)}><Edit className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" onClick={() => handleDelete(s.id)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
               </div>
             </div>
           ))

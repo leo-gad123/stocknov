@@ -290,7 +290,21 @@ function StockMovementPage() {
               <Input type="number" min={1} value={form.quantity || ""} onChange={(e) => setForm((f) => ({ ...f, quantity: Number(e.target.value) }))} />
             </div>
             <div className="space-y-2">
-              <Label>Taken By *</Label>
+              <div className="flex items-center justify-between">
+                <Label>Taken By *</Label>
+                <button
+                  type="button"
+                  className="flex items-center gap-1 text-xs text-primary hover:underline"
+                  onClick={() => {
+                    const name = prompt("Enter new person name:");
+                    if (name?.trim()) {
+                      setForm((f) => ({ ...f, takenBy: name.trim() }));
+                    }
+                  }}
+                >
+                  <Plus className="h-3 w-3" /> Add new
+                </button>
+              </div>
               <div className="relative">
                 <Input
                   value={form.takenBy}
