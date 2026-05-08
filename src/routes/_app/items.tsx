@@ -86,8 +86,8 @@ function ItemsPage() {
           supplierId: form.supplierId,
           quantityAdded: form.quantityAdded,
           unitType: form.unitType,
-          size: form.size || undefined,
-          notes: form.notes || undefined,
+          size: form.size || null,
+          notes: form.notes || null,
           remaining: form.quantityAdded - (editingItem.quantityUsed || 0),
         });
       } else {
@@ -99,8 +99,8 @@ function ItemsPage() {
           quantityUsed: 0,
           remaining: form.quantityAdded,
           unitType: form.unitType,
-          size: form.size || undefined,
-          notes: form.notes || undefined,
+          size: form.size || null,
+          notes: form.notes || null,
           dateAdded: Date.now(),
           createdBy: user.uid,
         });

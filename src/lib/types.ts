@@ -26,8 +26,8 @@ export interface Item {
   quantityUsed: number;
   remaining: number;
   unitType: UnitType;
-  size?: string;
-  notes?: string;
+  size?: string | null;
+  notes?: string | null;
   dateAdded: number;
   createdBy: string;
 }
@@ -36,7 +36,7 @@ export interface StockMovement {
   id: string;
   itemId: string;
   quantity: number;
-  notes?: string;
+  notes?: string | null;
   takenBy: string;
   createdAt: number;
   createdBy: string;
