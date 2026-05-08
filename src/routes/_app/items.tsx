@@ -5,10 +5,10 @@ import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import type { UnitType } from "@/lib/types";
-import { Plus, Search, Edit, Trash2, Loader2 } from "lucide-react";
+import { Plus, Search, Edit, Trash2, Loader2, ArrowDown, ArrowUp } from "lucide-react";
 import { format } from "date-fns";
 
 export const Route = createFileRoute("/_app/items")({
@@ -16,7 +16,6 @@ export const Route = createFileRoute("/_app/items")({
 });
 
 const UNIT_TYPES: UnitType[] = ["kg", "liters", "pieces"];
-const SIZES = ["XS", "S", "M", "L", "XL", "XXL"];
 
 function ItemsPage() {
   const { user, isAdmin } = useAuth();
@@ -30,6 +29,8 @@ function ItemsPage() {
   const [filterStock, setFilterStock] = useState("all");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<any>(null);
+  const [stockDialog, setStockDialog] = useState<{ item: any; type: "add" | "remove" } | null>(null);
+  const [stockQty, setStockQty] = useState(0);
 
   const [form, setForm] = useState({
     name: "",
@@ -113,6 +114,36 @@ function ItemsPage() {
     }
   };
 
+  const handleStockUpdate = async () => {
+    if (!stockDialog || stockQty <= 0) return;
+    setSaving(true);
+    try {
+      const item = stockDialog.item;
+      if (stockDialog.type === "add") {
+        await updateItem(item.id, {
+          quantityAdded: item.quantityAdded + stockQty,
+          remaining: item.remaining + stockQty,
+        });
+      } else {
+        if (stockQty > item.remaining) {
+          alert("Cannot remove more than available stock: " + item.remaining);
+          setSaving(false);
+          return;
+        }
+        await updateItem(item.id, {
+          quantityUsed: (item.quantityUsed || 0) + stockQty,
+          remaining: item.remaining - stockQty,
+        });
+      }
+      setStockDialog(null);
+      setStockQty(0);
+    } catch (err: any) {
+      alert(err.message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleDelete = async (id: string) => {
     if (confirm("Are you sure you want to delete this item?")) {
       await deleteItem(id);
@@ -147,29 +178,20 @@ function ItemsPage() {
       <div className="mb-6 flex flex-wrap gap-3">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Search items..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9"
-          />
+          <Input placeholder="Search items..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
         </div>
         <Select value={filterCategory} onValueChange={setFilterCategory}>
           <SelectTrigger className="w-[160px]"><SelectValue placeholder="Category" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Categories</SelectItem>
-            {categories.map((c) => (
-              <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-            ))}
+            {categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={filterSupplier} onValueChange={setFilterSupplier}>
           <SelectTrigger className="w-[160px]"><SelectValue placeholder="Supplier" /></SelectTrigger>
           <SelectContent>
             <SelectItem value="all">All Suppliers</SelectItem>
-            {suppliers.map((s) => (
-              <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-            ))}
+            {suppliers.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
           </SelectContent>
         </Select>
         <Select value={filterStock} onValueChange={setFilterStock}>
@@ -189,20 +211,18 @@ function ItemsPage() {
               <th>Name</th>
               <th>Category</th>
               <th>Supplier</th>
+              <th>Unit</th>
               <th>Added</th>
               <th>Used</th>
               <th>Remaining</th>
-              <th>Unit</th>
-              <th>Size</th>
-              <th>Status</th>
               {isAdmin && <th>Actions</th>}
             </tr>
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={isAdmin ? 10 : 9} className="text-center py-8"><Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" /></td></tr>
+              <tr><td colSpan={isAdmin ? 8 : 7} className="text-center py-8"><Loader2 className="mx-auto h-6 w-6 animate-spin text-muted-foreground" /></td></tr>
             ) : filtered.length === 0 ? (
-              <tr><td colSpan={isAdmin ? 10 : 9} className="text-center py-8 text-muted-foreground">No items found</td></tr>
+              <tr><td colSpan={isAdmin ? 8 : 7} className="text-center py-8 text-muted-foreground">No items found</td></tr>
             ) : (
               filtered.map((item) => {
                 const threshold = Math.ceil(item.quantityAdded * 0.25);
@@ -212,19 +232,31 @@ function ItemsPage() {
                     <td className="font-medium">{item.name}</td>
                     <td>{getCategoryName(item.categoryId)}</td>
                     <td>{getSupplierName(item.supplierId)}</td>
-                    <td>{item.quantityAdded}</td>
-                    <td>{item.quantityUsed}</td>
-                    <td className="font-semibold">{item.remaining}</td>
                     <td>{item.unitType}</td>
-                    <td>{item.size || "—"}</td>
-                    <td>
-                      <span className={isLow ? "stock-badge-low" : "stock-badge-ok"}>
-                        {isLow ? "Low Stock" : "In Stock"}
-                      </span>
-                    </td>
+                    <td>{item.quantityAdded}</td>
+                    <td className={item.quantityUsed > 0 ? "text-orange-500" : ""}>{item.quantityUsed}</td>
+                    <td className="font-semibold">{item.remaining} {item.unitType}</td>
                     {isAdmin && (
                       <td>
                         <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Add Stock"
+                            className="text-green-600 hover:text-green-700"
+                            onClick={() => { setStockDialog({ item, type: "add" }); setStockQty(0); }}
+                          >
+                            <ArrowDown className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            title="Remove Stock"
+                            className="text-orange-500 hover:text-orange-600"
+                            onClick={() => { setStockDialog({ item, type: "remove" }); setStockQty(0); }}
+                          >
+                            <ArrowUp className="h-4 w-4" />
+                          </Button>
                           <Button variant="ghost" size="icon" onClick={() => openEdit(item)}>
                             <Edit className="h-4 w-4" />
                           </Button>
@@ -242,7 +274,30 @@ function ItemsPage() {
         </table>
       </div>
 
-      {/* Dialog */}
+      {/* Stock Add/Remove Dialog */}
+      <Dialog open={!!stockDialog} onOpenChange={(open) => { if (!open) setStockDialog(null); }}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>
+              {stockDialog?.type === "add" ? "Add Stock" : "Remove Stock"} — {stockDialog?.item?.name}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              Current remaining: <span className="font-semibold text-foreground">{stockDialog?.item?.remaining} {stockDialog?.item?.unitType}</span>
+            </p>
+            <div className="space-y-2">
+              <Label>Quantity</Label>
+              <Input type="number" min={1} value={stockQty || ""} onChange={(e) => setStockQty(Number(e.target.value))} />
+            </div>
+            <Button className="w-full" onClick={handleStockUpdate} disabled={saving || stockQty <= 0}>
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : stockDialog?.type === "add" ? "Add Stock" : "Remove Stock"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add/Edit Item Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="max-w-lg">
           <DialogHeader>
@@ -260,9 +315,7 @@ function ItemsPage() {
                 <Select value={form.categoryId} onValueChange={(v) => setForm((f) => ({ ...f, categoryId: v }))}>
                   <SelectTrigger className="flex-1"><SelectValue placeholder="Select category" /></SelectTrigger>
                   <SelectContent>
-                    {categories.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
-                    ))}
+                    {categories.map((c) => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
                   </SelectContent>
                 </Select>
                 <Button variant="outline" size="sm" onClick={() => setShowNewCategory(!showNewCategory)}>
@@ -271,12 +324,7 @@ function ItemsPage() {
               </div>
               {showNewCategory && (
                 <div className="flex gap-2">
-                  <Input
-                    placeholder="New category name"
-                    value={newCategoryName}
-                    onChange={(e) => setNewCategoryName(e.target.value)}
-                    className="flex-1"
-                  />
+                  <Input placeholder="New category name" value={newCategoryName} onChange={(e) => setNewCategoryName(e.target.value)} className="flex-1" />
                   <Button size="sm" onClick={handleAddCategory}>Add</Button>
                 </div>
               )}
@@ -287,9 +335,7 @@ function ItemsPage() {
               <Select value={form.supplierId} onValueChange={(v) => setForm((f) => ({ ...f, supplierId: v }))}>
                 <SelectTrigger><SelectValue placeholder="Select supplier" /></SelectTrigger>
                 <SelectContent>
-                  {suppliers.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
-                  ))}
+                  {suppliers.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                 </SelectContent>
               </Select>
             </div>
@@ -297,33 +343,22 @@ function ItemsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Quantity Added</Label>
-                <Input
-                  type="number"
-                  min={0}
-                  value={form.quantityAdded}
-                  onChange={(e) => setForm((f) => ({ ...f, quantityAdded: Number(e.target.value) }))}
-                />
+                <Input type="number" min={0} value={form.quantityAdded} onChange={(e) => setForm((f) => ({ ...f, quantityAdded: Number(e.target.value) }))} />
               </div>
               <div className="space-y-2">
                 <Label>Unit Type</Label>
                 <Select value={form.unitType} onValueChange={(v) => setForm((f) => ({ ...f, unitType: v as UnitType }))}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
-                    {UNIT_TYPES.map((u) => (
-                      <SelectItem key={u} value={u}>{u}</SelectItem>
-                    ))}
+                    {UNIT_TYPES.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label>Size (optional - for uniforms/clothing/shoes)</Label>
-              <Input
-                placeholder="e.g. XS, S, M, L, XL, XXL or shoe number"
-                value={form.size}
-                onChange={(e) => setForm((f) => ({ ...f, size: e.target.value }))}
-              />
+              <Label>Size (optional)</Label>
+              <Input placeholder="e.g. XS, S, M, L, XL, XXL or shoe number" value={form.size} onChange={(e) => setForm((f) => ({ ...f, size: e.target.value }))} />
             </div>
 
             <div className="space-y-2">

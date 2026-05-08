@@ -49,8 +49,8 @@ export function AppSidebar() {
         </div>
         {!collapsed && (
           <div className="flex-1 overflow-hidden">
-            <h1 className="truncate text-sm font-semibold text-sidebar-foreground">StockManager</h1>
-            <p className="truncate text-xs text-sidebar-foreground/60">Inventory System</p>
+            <h1 className="truncate text-sm font-semibold text-sidebar-foreground">StockNova</h1>
+            <p className="truncate text-xs text-sidebar-foreground/60">Inventory</p>
           </div>
         )}
         <button

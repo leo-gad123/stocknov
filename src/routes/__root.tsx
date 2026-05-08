@@ -73,10 +73,10 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "StockManager - Inventory Management" },
+      { title: "StockNova - Inventory Management" },
       { name: "description", content: "Modern stock management and inventory tracking system" },
-      { property: "og:title", content: "StockManager - Inventory Management" },
-      { name: "twitter:title", content: "StockManager - Inventory Management" },
+      { property: "og:title", content: "StockNova - Inventory Management" },
+      { name: "twitter:title", content: "StockNova - Inventory Management" },
       { property: "og:description", content: "Modern stock management and inventory tracking system" },
       { name: "twitter:description", content: "Modern stock management and inventory tracking system" },
       { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/84edc0e5-4101-4d74-ab2b-9cf18057bd2f/id-preview-aa31e095--9a40ebf3-62b7-4feb-8850-788c07a199ef.lovable.app-1778217273578.png" },
