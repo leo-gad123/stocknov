@@ -114,8 +114,8 @@ export async function addStockMovement(data: Omit<StockMovement, "id">) {
     quantityUsed: newUsed,
   });
 
-  // Check low stock (45% threshold)
-  const threshold = Math.ceil(item.quantityAdded * 0.45);
+  // Check low stock (25% threshold)
+  const threshold = Math.ceil(item.quantityAdded * 0.25);
   if (newRemaining <= threshold) {
     const notifRef = push(ref(db, "notifications"));
     await set(notifRef, {

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useItems, useCategories, useSuppliers, useStockMovements, addStockMovement } from "@/lib/firebase-hooks";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,19 @@ function StockMovementPage() {
   const [form, setForm] = useState({ itemId: "", quantity: 0, notes: "", takenBy: "" });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [takenByOpen, setTakenByOpen] = useState(false);
+  const [takenBySearch, setTakenBySearch] = useState("");
+
+  // Unique list of previous "taken by" names
+  const previousTakers = useMemo(() => {
+    const names = new Set<string>();
+    movements.forEach((m) => { if (m.takenBy?.trim()) names.add(m.takenBy.trim()); });
+    return Array.from(names).sort();
+  }, [movements]);
+
+  const filteredTakers = previousTakers.filter((name) =>
+    name.toLowerCase().includes(takenBySearch.toLowerCase())
+  );
 
   const sorted = [...movements].sort((a, b) => b.createdAt - a.createdAt);
   const filtered = sorted.filter((m) => {
@@ -44,7 +57,7 @@ function StockMovementPage() {
       await addStockMovement({
         itemId: form.itemId,
         quantity: form.quantity,
-        notes: form.notes || undefined,
+        notes: form.notes || null,
         takenBy: form.takenBy.trim(),
         createdAt: Date.now(),
         createdBy: user.uid,
@@ -278,7 +291,38 @@ function StockMovementPage() {
             </div>
             <div className="space-y-2">
               <Label>Taken By *</Label>
-              <Input value={form.takenBy} onChange={(e) => setForm((f) => ({ ...f, takenBy: e.target.value }))} placeholder="Name of person" />
+              <div className="relative">
+                <Input
+                  value={form.takenBy}
+                  onChange={(e) => {
+                    setForm((f) => ({ ...f, takenBy: e.target.value }));
+                    setTakenByOpen(true);
+                    setTakenBySearch(e.target.value);
+                  }}
+                  onFocus={() => { setTakenByOpen(true); setTakenBySearch(form.takenBy); }}
+                  onBlur={() => setTimeout(() => setTakenByOpen(false), 150)}
+                  placeholder="Type or select a name"
+                  autoComplete="off"
+                />
+                {takenByOpen && filteredTakers.length > 0 && (
+                  <div className="absolute z-50 mt-1 max-h-40 w-full overflow-y-auto rounded-md border bg-popover shadow-md">
+                    {filteredTakers.map((name) => (
+                      <button
+                        key={name}
+                        type="button"
+                        className="w-full px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground"
+                        onMouseDown={(e) => {
+                          e.preventDefault();
+                          setForm((f) => ({ ...f, takenBy: name }));
+                          setTakenByOpen(false);
+                        }}
+                      >
+                        {name}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
             <div className="space-y-2">
               <Label>Notes</Label>

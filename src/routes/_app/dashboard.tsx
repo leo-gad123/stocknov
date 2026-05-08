@@ -22,7 +22,7 @@ function DashboardPage() {
   const { data: movements } = useStockMovements();
 
   const lowStockItems = items.filter((item) => {
-    const threshold = Math.ceil(item.quantityAdded * 0.45);
+    const threshold = Math.ceil(item.quantityAdded * 0.25);
     return item.remaining <= threshold;
   });
 
@@ -57,7 +57,7 @@ function DashboardPage() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="stat-card">
           <div className="flex items-center justify-between">
             <div>
@@ -70,16 +70,7 @@ function DashboardPage() {
         <div className="stat-card">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Total Quantity by Unit</p>
-              <p className="mt-1 text-xl font-semibold text-foreground">{totalByUnit || "0"}</p>
-            </div>
-            <BarChart3 className="h-8 w-8 text-primary opacity-80" />
-          </div>
-        </div>
-        <div className="stat-card">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Low Stock Items (≤45%)</p>
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Low Stock Items (≤25%)</p>
               <p className="mt-1 text-3xl font-semibold text-foreground">{lowStockItems.length}</p>
             </div>
             <AlertTriangle className="h-8 w-8 text-low-stock opacity-80" />
@@ -130,7 +121,7 @@ function DashboardPage() {
                 </thead>
                 <tbody>
                   {items.map((item) => {
-                    const threshold = Math.ceil(item.quantityAdded * 0.45);
+                    const threshold = Math.ceil(item.quantityAdded * 0.25);
                     const isLow = item.remaining <= threshold;
                     return (
                       <tr key={item.id} className={isLow ? "bg-low-stock/5" : ""}>
@@ -150,6 +141,42 @@ function DashboardPage() {
             </div>
           )}
         </div>
+        {/* Recent Stock Movements */}
+        <div className="rounded-lg border bg-card p-5">
+          <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-foreground">
+            <ArrowDownUp className="h-5 w-5 text-primary" />
+            Recent Stock Movements
+          </h2>
+          {recentMovements.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No movements yet.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="data-table">
+                <thead>
+                  <tr>
+                    <th>Item</th>
+                    <th>Qty</th>
+                    <th>Taken By</th>
+                    <th>Date</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {recentMovements.map((mov) => {
+                    const item = items.find((i) => i.id === mov.itemId);
+                    return (
+                      <tr key={mov.id}>
+                        <td className="font-medium">{item?.name || "Unknown"}</td>
+                        <td>{mov.quantity} {item?.unitType}</td>
+                        <td>{mov.takenBy}</td>
+                        <td className="text-muted-foreground">{format(new Date(mov.createdAt), "MMM d, HH:mm")}</td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Low Stock Alerts */}
@@ -157,11 +184,11 @@ function DashboardPage() {
         <div className="mt-6 rounded-lg border border-low-stock/30 bg-low-stock/5 p-5">
           <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-low-stock">
             <AlertTriangle className="h-5 w-5" />
-            Low stock alerts (≤ 45% of added)
+            Low stock alerts (≤ 25% of added)
           </h2>
           <div className="flex flex-wrap gap-2">
             {lowStockItems.map((item) => {
-              const threshold = Math.ceil(item.quantityAdded * 0.45);
+              const threshold = Math.ceil(item.quantityAdded * 0.25);
               return (
                 <span key={item.id} className="inline-flex items-center rounded-full border border-low-stock/30 bg-card px-3 py-1.5 text-sm">
                   <span className="font-medium text-foreground">{item.name}</span>

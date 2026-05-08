@@ -92,7 +92,7 @@ function ReportsPage() {
       yPos += 6;
 
       const tableData = filteredItems.map((item) => {
-        const threshold = Math.ceil(item.quantityAdded * 0.45);
+        const threshold = Math.ceil(item.quantityAdded * 0.25);
         return [
           item.name,
           getSupplierName(item.supplierId),
@@ -137,7 +137,7 @@ function ReportsPage() {
         summaryY += 8;
 
         const totalItems = filteredItems.length;
-        const lowStockItems = filteredItems.filter((i) => i.remaining <= Math.ceil(i.quantityAdded * 0.45)).length;
+        const lowStockItems = filteredItems.filter((i) => i.remaining <= Math.ceil(i.quantityAdded * 0.25)).length;
         const totalAdded = filteredItems.reduce((sum, i) => sum + i.quantityAdded, 0);
         const totalUsed = filteredItems.reduce((sum, i) => sum + i.quantityUsed, 0);
         const totalRemaining = filteredItems.reduce((sum, i) => sum + i.remaining, 0);
@@ -181,7 +181,7 @@ function ReportsPage() {
 
         const catBreakdown = categories.map((cat) => {
           const catItems = filteredItems.filter((i) => i.categoryId === cat.id);
-          const catLow = catItems.filter((i) => i.remaining <= Math.ceil(i.quantityAdded * 0.45)).length;
+          const catLow = catItems.filter((i) => i.remaining <= Math.ceil(i.quantityAdded * 0.25)).length;
           return [cat.name, String(catItems.length), String(catLow), String(catItems.reduce((s, i) => s + i.remaining, 0))];
         }).filter((row) => row[1] !== "0");
 
@@ -270,7 +270,7 @@ function ReportsPage() {
                   <p className="text-sm text-muted-foreground">Low Stock</p>
                   <p className="text-2xl font-semibold text-low-stock">
                     {(categoryFilter === "all" ? items : items.filter((i) => i.categoryId === categoryFilter))
-                      .filter((i) => i.remaining <= Math.ceil(i.quantityAdded * 0.45)).length}
+                      .filter((i) => i.remaining <= Math.ceil(i.quantityAdded * 0.25)).length}
                   </p>
                 </div>
                 <div className="stat-card text-center">
