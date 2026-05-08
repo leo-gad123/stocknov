@@ -106,7 +106,7 @@ function StockMovementPage() {
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(20);
     doc.setFont("helvetica", "bold");
-    doc.text("StockManager", 14, 16);
+    doc.text("StockNova", 14, 16);
     doc.setFontSize(10);
     doc.setFont("helvetica", "normal");
     doc.text(`${type.charAt(0).toUpperCase() + type.slice(1)} Stock Movement Report`, 14, 24);
