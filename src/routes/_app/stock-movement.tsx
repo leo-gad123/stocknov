@@ -27,6 +27,19 @@ function StockMovementPage() {
   const [form, setForm] = useState({ itemId: "", quantity: 0, notes: "", takenBy: "" });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [takenByOpen, setTakenByOpen] = useState(false);
+  const [takenBySearch, setTakenBySearch] = useState("");
+
+  // Unique list of previous "taken by" names
+  const previousTakers = useMemo(() => {
+    const names = new Set<string>();
+    movements.forEach((m) => { if (m.takenBy?.trim()) names.add(m.takenBy.trim()); });
+    return Array.from(names).sort();
+  }, [movements]);
+
+  const filteredTakers = previousTakers.filter((name) =>
+    name.toLowerCase().includes(takenBySearch.toLowerCase())
+  );
 
   const sorted = [...movements].sort((a, b) => b.createdAt - a.createdAt);
   const filtered = sorted.filter((m) => {
