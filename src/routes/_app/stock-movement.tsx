@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useMemo, useRef } from "react";
 import { useItems, useCategories, useSuppliers, useStockMovements, addStockMovement } from "@/lib/firebase-hooks";
 import { useAuth } from "@/lib/auth-context";
 import { Button } from "@/components/ui/button";
