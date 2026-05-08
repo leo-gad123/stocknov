@@ -184,7 +184,7 @@ function DashboardPage() {
         <div className="mt-6 rounded-lg border border-low-stock/30 bg-low-stock/5 p-5">
           <h2 className="mb-3 flex items-center gap-2 text-base font-semibold text-low-stock">
             <AlertTriangle className="h-5 w-5" />
-            Low stock alerts (≤ 45% of added)
+            Low stock alerts (≤ 25% of added)
           </h2>
           <div className="flex flex-wrap gap-2">
             {lowStockItems.map((item) => {
