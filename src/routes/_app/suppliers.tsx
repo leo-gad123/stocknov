@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Plus, Edit, Trash2, Loader2, Truck, Phone, Mail, MapPin } from "lucide-react";
+import { Plus, Edit, Trash2, Loader2, Truck, Phone, Mail, MapPin, Package } from "lucide-react";
 import { format } from "date-fns";
 
 export const Route = createFileRoute("/_app/suppliers")({
@@ -18,24 +18,24 @@ function SuppliersPage() {
   const { data: suppliers, loading } = useSuppliers();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({ name: "", phone: "", email: "", address: "" });
+  const [form, setForm] = useState({ name: "", phone: "", email: "", address: "", supplies: "" });
   const [saving, setSaving] = useState(false);
 
   if (!isAdmin) {
     return <div className="flex items-center justify-center py-20"><p className="text-muted-foreground">You don't have permission to manage suppliers.</p></div>;
   }
 
-  const openNew = () => { setEditingId(null); setForm({ name: "", phone: "", email: "", address: "" }); setDialogOpen(true); };
-  const openEdit = (s: any) => { setEditingId(s.id); setForm({ name: s.name, phone: s.phone, email: s.email || "", address: s.address }); setDialogOpen(true); };
+  const openNew = () => { setEditingId(null); setForm({ name: "", phone: "", email: "", address: "", supplies: "" }); setDialogOpen(true); };
+  const openEdit = (s: any) => { setEditingId(s.id); setForm({ name: s.name, phone: s.phone, email: s.email || "", address: s.address, supplies: s.supplies || "" }); setDialogOpen(true); };
 
   const handleSave = async () => {
     if (!form.name.trim() || !form.phone.trim()) return;
     setSaving(true);
     try {
       if (editingId) {
-        await updateSupplier(editingId, { name: form.name, phone: form.phone, email: form.email || undefined, address: form.address });
+        await updateSupplier(editingId, { name: form.name, phone: form.phone, email: form.email || undefined, address: form.address, supplies: form.supplies || undefined });
       } else {
-        await addSupplier({ name: form.name, phone: form.phone, email: form.email || undefined, address: form.address });
+        await addSupplier({ name: form.name, phone: form.phone, email: form.email || undefined, address: form.address, supplies: form.supplies || undefined });
       }
       setDialogOpen(false);
     } catch (err: any) { alert(err.message); } finally { setSaving(false); }
@@ -66,6 +66,7 @@ function SuppliersPage() {
                 <span className="flex items-center gap-1.5"><Phone className="h-3.5 w-3.5" />{s.phone}</span>
                 {s.email && <span className="flex items-center gap-1.5"><Mail className="h-3.5 w-3.5" />{s.email}</span>}
                 <span className="flex items-center gap-1.5"><MapPin className="h-3.5 w-3.5" />{s.address}</span>
+                {s.supplies && <span className="flex items-center gap-1.5"><Package className="h-3.5 w-3.5" />{s.supplies}</span>}
               </div>
               <div className="flex shrink-0 gap-1">
                 <Button variant="ghost" size="icon" onClick={() => openEdit(s)}><Edit className="h-4 w-4" /></Button>
@@ -84,6 +85,7 @@ function SuppliersPage() {
             <div className="space-y-2"><Label>Phone *</Label><Input value={form.phone} onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))} /></div>
             <div className="space-y-2"><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} /></div>
             <div className="space-y-2"><Label>Address *</Label><Input value={form.address} onChange={(e) => setForm((f) => ({ ...f, address: e.target.value }))} /></div>
+            <div className="space-y-2"><Label>Supplies (products)</Label><Input placeholder="e.g. Rice, Cooking oil, Soap" value={form.supplies} onChange={(e) => setForm((f) => ({ ...f, supplies: e.target.value }))} /></div>
             <Button className="w-full" onClick={handleSave} disabled={saving || !form.name.trim() || !form.phone.trim()}>
               {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : editingId ? "Update" : "Create"}
             </Button>
