@@ -27,19 +27,26 @@ function StockMovementPage() {
   const [form, setForm] = useState({ itemId: "", quantity: 0, notes: "", takenBy: "" });
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
-  const [takenByOpen, setTakenByOpen] = useState(false);
-  const [takenBySearch, setTakenBySearch] = useState("");
+  const [addedTakers, setAddedTakers] = useState<string[]>([]);
+  const [showNewPerson, setShowNewPerson] = useState(false);
+  const [newPersonName, setNewPersonName] = useState("");
 
-  // Unique list of previous "taken by" names
+  // Unique list of previous "taken by" names (history + locally added)
   const previousTakers = useMemo(() => {
     const names = new Set<string>();
     movements.forEach((m) => { if (m.takenBy?.trim()) names.add(m.takenBy.trim()); });
+    addedTakers.forEach((n) => { if (n.trim()) names.add(n.trim()); });
     return Array.from(names).sort();
-  }, [movements]);
+  }, [movements, addedTakers]);
 
-  const filteredTakers = previousTakers.filter((name) =>
-    name.toLowerCase().includes(takenBySearch.toLowerCase())
-  );
+  const handleAddNewPerson = () => {
+    const name = newPersonName.trim();
+    if (!name) return;
+    if (!addedTakers.includes(name)) setAddedTakers((p) => [...p, name]);
+    setForm((f) => ({ ...f, takenBy: name }));
+    setNewPersonName("");
+    setShowNewPerson(false);
+  };
 
   const sorted = [...movements].sort((a, b) => b.createdAt - a.createdAt);
   const filtered = sorted.filter((m) => {
@@ -291,56 +298,54 @@ function StockMovementPage() {
             </div>
             <div className="space-y-2">
               <Label>Taken By *</Label>
-              <div className="relative">
-                <div className="flex gap-2">
-                  <div className="relative flex-1">
-                    <Input
-                      value={form.takenBy}
-                      onChange={(e) => {
-                        setForm((f) => ({ ...f, takenBy: e.target.value }));
-                        setTakenByOpen(true);
-                        setTakenBySearch(e.target.value);
-                      }}
-                      onFocus={() => { setTakenByOpen(true); setTakenBySearch(form.takenBy); }}
-                      onBlur={() => setTimeout(() => setTakenByOpen(false), 150)}
-                      placeholder="Type or select a name"
-                      autoComplete="off"
-                    />
-                    {takenByOpen && (
-                      <div className="absolute z-50 mt-1 max-h-48 w-full overflow-y-auto rounded-md border bg-popover shadow-md">
-                        {filteredTakers.map((name) => (
-                          <button
-                            key={name}
-                            type="button"
-                            className="w-full px-3 py-2 text-left text-sm hover:bg-accent hover:text-accent-foreground"
-                            onMouseDown={(e) => {
-                              e.preventDefault();
-                              setForm((f) => ({ ...f, takenBy: name }));
-                              setTakenByOpen(false);
-                            }}
-                          >
-                            {name}
-                          </button>
-                        ))}
-                        <button
-                          type="button"
-                          className="flex w-full items-center gap-2 border-t px-3 py-2 text-left text-sm font-medium text-primary hover:bg-accent"
-                          onMouseDown={(e) => {
-                            e.preventDefault();
-                            setTakenByOpen(false);
-                            const newName = prompt("Enter new person name:");
-                            if (newName?.trim()) {
-                              setForm((f) => ({ ...f, takenBy: newName.trim() }));
-                            }
-                          }}
-                        >
-                          <Plus className="h-3.5 w-3.5" /> Add new person
-                        </button>
-                      </div>
-                    )}
-                  </div>
+              <Select
+                value={form.takenBy && previousTakers.includes(form.takenBy) ? form.takenBy : ""}
+                onValueChange={(v) => {
+                  if (v === "__add_new__") {
+                    setShowNewPerson(true);
+                  } else {
+                    setForm((f) => ({ ...f, takenBy: v }));
+                  }
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a person">
+                    {form.takenBy || "Select a person"}
+                  </SelectValue>
+                </SelectTrigger>
+                <SelectContent>
+                  {previousTakers.length === 0 && (
+                    <div className="px-2 py-1.5 text-xs text-muted-foreground">No people yet</div>
+                  )}
+                  {previousTakers.map((name) => (
+                    <SelectItem key={name} value={name}>{name}</SelectItem>
+                  ))}
+                  <SelectItem value="__add_new__" className="text-primary font-medium">
+                    + Add new person
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+
+              {showNewPerson && (
+                <div className="flex gap-2 rounded-md border border-dashed border-primary/40 bg-primary/5 p-2">
+                  <Input
+                    autoFocus
+                    placeholder="Type new person's name"
+                    value={newPersonName}
+                    onChange={(e) => setNewPersonName(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") { e.preventDefault(); handleAddNewPerson(); }
+                      if (e.key === "Escape") { setShowNewPerson(false); setNewPersonName(""); }
+                    }}
+                  />
+                  <Button type="button" size="sm" onClick={handleAddNewPerson} disabled={!newPersonName.trim()}>
+                    Add
+                  </Button>
+                  <Button type="button" size="sm" variant="ghost" onClick={() => { setShowNewPerson(false); setNewPersonName(""); }}>
+                    Cancel
+                  </Button>
                 </div>
-              </div>
+              )}
             </div>
             <div className="space-y-2">
               <Label>Notes</Label>
