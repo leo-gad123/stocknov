@@ -1,12 +1,8 @@
 [build]
-  command = "bun run build"
-  publish = "dist"
+command = "bun run build"
+publish = "dist/client"
 
-[build.environment]
-  BUN_VERSION = "1.2.15"
-
-# SPA fallback: every unknown path serves index.html so client-side routing works
 [[redirects]]
-  from = "/*"
-  to = "/index.html"
-  status = 200
+from = "/*"
+to = "/index.html"
+status = 200
